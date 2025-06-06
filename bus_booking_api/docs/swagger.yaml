@@ -1,0 +1,527 @@
+basePath: /api/v1
+definitions:
+  models.Booking:
+    properties:
+      bookingTime:
+        type: string
+      createdAt:
+        type: string
+      heldUntil:
+        type: string
+      id:
+        type: string
+      passengers:
+        items:
+          $ref: '#/definitions/models.PassengerInfo'
+        type: array
+      paymentGatewayTransactionId:
+        type: string
+      paymentMethod:
+        type: string
+      paymentStatus:
+        type: string
+      status:
+        type: string
+      ticketCode:
+        type: string
+      totalAmount:
+        type: number
+      tripId:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  models.CreateBookingRequest:
+    properties:
+      passengers:
+        items:
+          $ref: '#/definitions/models.PassengerInfo'
+        type: array
+      tripId:
+        type: string
+    required:
+    - passengers
+    - tripId
+    type: object
+  models.GeoJSONPoint:
+    properties:
+      coordinates:
+        items:
+          type: number
+        type: array
+      type:
+        type: string
+    type: object
+  models.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+  models.MockPaymentRequest:
+    properties:
+      bookingId:
+        type: string
+    required:
+    - bookingId
+    type: object
+  models.PassengerInfo:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+      seatNumber:
+        type: string
+    type: object
+  models.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - phone
+    type: object
+  models.Route:
+    properties:
+      from:
+        $ref: '#/definitions/models.StopPoint'
+      polyline:
+        type: string
+      stops:
+        items:
+          $ref: '#/definitions/models.TripStop'
+        type: array
+      to:
+        $ref: '#/definitions/models.StopPoint'
+    type: object
+  models.StopPoint:
+    properties:
+      location:
+        $ref: '#/definitions/models.GeoJSONPoint'
+      name:
+        type: string
+    type: object
+  models.Trip:
+    properties:
+      companyId:
+        type: string
+      createdAt:
+        type: string
+      departureTime:
+        type: string
+      expectedArrivalTime:
+        type: string
+      id:
+        type: string
+      price:
+        type: number
+      route:
+        $ref: '#/definitions/models.Route'
+      seats:
+        items:
+          $ref: '#/definitions/models.TripSeat'
+        type: array
+      status:
+        type: string
+      updatedAt:
+        type: string
+      vehicleId:
+        type: string
+    type: object
+  models.TripSeat:
+    properties:
+      bookingId:
+        type: string
+      seatNumber:
+        type: string
+      status:
+        type: string
+    type: object
+  models.TripStop:
+    properties:
+      expectedArrivalTime:
+        type: string
+      expectedDepartureTime:
+        type: string
+      location:
+        $ref: '#/definitions/models.GeoJSONPoint'
+      name:
+        type: string
+    type: object
+  models.User:
+    properties:
+      companyId:
+        type: string
+      createdAt:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API cho hệ thống đặt vé xe khách.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Bus Booking API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Đăng nhập bằng email và mật khẩu, trả về thông tin người dùng và
+        JWT token.
+      parameters:
+      - description: Thông tin đăng nhập
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đăng nhập thành công
+          schema:
+            $ref: '#/definitions/models.LoginResponse'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Thông tin đăng nhập không chính xác
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi máy chủ nội bộ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Đăng nhập vào hệ thống
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Tạo một tài khoản người dùng mới với email, số điện thoại, mật
+        khẩu và tên.
+      parameters:
+      - description: Thông tin đăng ký
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tạo tài khoản thành công
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi máy chủ nội bộ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Đăng ký tài khoản người dùng mới
+      tags:
+      - auth
+  /bookings:
+    post:
+      consumes:
+      - application/json
+      description: Người dùng đặt vé cho một chuyến đi với thông tin hành khách.
+      parameters:
+      - description: Thông tin đặt vé
+        in: body
+        name: bookingRequest
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Đặt vé thành công, chờ thanh toán
+          schema:
+            $ref: '#/definitions/models.Booking'
+        "400":
+          description: Dữ liệu không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Chưa xác thực hoặc token không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Chuyến đi không tìm thấy
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Ghế không còn trống
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi máy chủ nội bộ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Tạo một đặt vé mới
+      tags:
+      - bookings
+  /bookings/{bookingId}:
+    get:
+      consumes:
+      - application/json
+      description: Người dùng lấy thông tin chi tiết của một đặt vé họ đã tạo.
+      parameters:
+      - description: ID của đặt vé
+        in: path
+        name: bookingId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chi tiết đặt vé
+          schema:
+            $ref: '#/definitions/models.Booking'
+        "400":
+          description: ID đặt vé không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Chưa xác thực
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Không có quyền xem đặt vé này
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Đặt vé không tìm thấy
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi máy chủ nội bộ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Lấy chi tiết một đặt vé
+      tags:
+      - bookings
+  /bookings/payment/mock:
+    post:
+      consumes:
+      - application/json
+      description: Đánh dấu một đặt vé là đã thanh toán thành công (mock).
+      parameters:
+      - description: ID của đặt vé cần thanh toán
+        in: body
+        name: paymentRequest
+        required: true
+        schema:
+          $ref: '#/definitions/models.MockPaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thanh toán thành công, đặt vé đã được xác nhận
+          schema:
+            $ref: '#/definitions/models.Booking'
+        "400":
+          description: Dữ liệu không hợp lệ hoặc đặt vé không phù hợp để thanh toán
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Chưa xác thực hoặc không có quyền
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Đặt vé không tìm thấy
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi máy chủ nội bộ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Giả lập thanh toán cho một đặt vé
+      tags:
+      - bookings
+  /trips/{tripId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin chi tiết của một chuyến đi dựa vào ID.
+      parameters:
+      - description: ID của chuyến đi
+        in: path
+        name: tripId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chi tiết chuyến đi
+          schema:
+            $ref: '#/definitions/models.Trip'
+        "400":
+          description: ID chuyến đi không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy chuyến đi
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi máy chủ nội bộ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy chi tiết một chuyến đi
+      tags:
+      - trips
+  /trips/search:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm các chuyến đi dựa trên điểm đi, điểm đến và ngày.
+      parameters:
+      - description: 'Tên điểm đi (ví dụ: Sài Gòn)'
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: 'Tên điểm đến (ví dụ: Đà Lạt)'
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: Ngày khởi hành (YYYY-MM-DD)
+        in: query
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách chuyến đi phù hợp
+          schema:
+            items:
+              $ref: '#/definitions/models.Trip'
+            type: array
+        "400":
+          description: Tham số không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi máy chủ nội bộ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Tìm kiếm chuyến đi
+      tags:
+      - trips
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
