@@ -1,7 +1,6 @@
 module bus_booking_api
 
-go 1.24.1
-
+go 1.24.0
 require github.com/swaggo/gin-swagger v1.6.0
 
 require github.com/swaggo/files v1.0.1

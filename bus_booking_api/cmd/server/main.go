@@ -29,7 +29,6 @@ import (
 
 var mongoClient *mongo.Client
 
-// InitMongoDB initializes the MongoDB connection
 func InitMongoDB(cfg *config.Config) (*mongo.Database, error) {
 	log.Println("Đang kết nối tới MongoDB...")
 
@@ -43,19 +42,17 @@ func InitMongoDB(cfg *config.Config) (*mongo.Database, error) {
 		return nil, err
 	}
 
-	// Ping the primary
 	if err := client.Ping(ctx, readpref.Primary()); err != nil {
 		log.Printf("Lỗi khi ping MongoDB: %v\n", err)
 		return nil, err
 	}
 
-	mongoClient = client // Store the client globally or pass it around
+	mongoClient = client 
 	db := client.Database(cfg.MongoDBDatabaseName)
 	log.Printf("Đã kết nối thành công tới MongoDB, cơ sở dữ liệu: %s\n", cfg.MongoDBDatabaseName)
 	return db, nil
 }
 
-// CloseMongoDBConnection closes the MongoDB connection
 func CloseMongoDBConnection() {
 	if mongoClient != nil {
 		log.Println("Đang đóng kết nối MongoDB...")
@@ -88,20 +85,17 @@ func CloseMongoDBConnection() {
 // @in header
 // @name Authorization
 func main() {
-	// 1. Load configuration
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("Lỗi khi tải cấu hình: %v", err)
 	}
 
-	// 2. Initialize MongoDB connection
 	db, err := InitMongoDB(cfg)
 	if err != nil {
 		log.Fatalf("Không thể khởi tạo kết nối MongoDB: %v", err)
 	}
 	defer CloseMongoDBConnection()
 
-	// 3. Initialize Repositories
 	userRepo := repositories.NewMongoUserRepository(db, config.UsersCollection)
 	companyRepo := repositories.NewMongoCompanyRepository(db, config.CompaniesCollection)
 	vehicleRepo := repositories.NewMongoVehicleRepository(db, config.VehiclesCollection)
@@ -109,27 +103,20 @@ func main() {
 	bookingRepo := repositories.NewMongoBookingRepository(db, config.BookingsCollection)
 	log.Println("Tất cả repositories đã được khởi tạo.")
 
-	// 4. Initialize Services
 	authSvc := services.NewAuthService(userRepo, cfg)
-	tripSvc := services.NewTripService(tripRepo, companyRepo, vehicleRepo) // Truyền companyRepo và vehicleRepo
+	tripSvc := services.NewTripService(tripRepo, companyRepo, vehicleRepo) 
 	bookingSvc := services.NewBookingService(bookingRepo, tripRepo, userRepo)
 	log.Println("Tất cả services đã được khởi tạo.")
 
-	// --- SEED DATA ---
-	// Gọi hàm RunSeeders từ package seed
 	seed.RunSeeders(cfg, userRepo, companyRepo, vehicleRepo, tripRepo, bookingRepo, tripSvc)
-	// --- END SEED DATA ---
 
-	// 5. Initialize Handlers
 	authHandler := handlers.NewAuthHandler(authSvc)
 	tripHandler := handlers.NewTripHandler(tripSvc)
 	bookingHandler := handlers.NewBookingHandler(bookingSvc)
 	log.Println("Tất cả handlers đã được khởi tạo.")
 
-	// 6. Initialize Gin Router
 	router := gin.Default()
 
-	// CORS Middleware
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -139,26 +126,22 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// API v1 routes
 	apiV1 := router.Group("/api/v1")
 	{
-		// Auth routes
 		authRoutes := apiV1.Group("/auth")
 		{
 			authRoutes.POST("/register", authHandler.Register)
 			authRoutes.POST("/login", authHandler.Login)
 		}
 
-		// Trip routes
 		tripRoutes := apiV1.Group("/trips")
 		{
 			tripRoutes.GET("/search", tripHandler.SearchTrips)
 			tripRoutes.GET("/:tripId", tripHandler.GetTripDetails)
 		}
 
-		// Booking routes (yêu cầu xác thực)
 		bookingRoutes := apiV1.Group("/bookings")
-		bookingRoutes.Use(middleware.AuthMiddleware(cfg)) // Áp dụng middleware xác thực
+		bookingRoutes.Use(middleware.AuthMiddleware(cfg)) 
 		{
 			bookingRoutes.POST("", bookingHandler.CreateBooking)
 			bookingRoutes.POST("/payment/mock", bookingHandler.MockPayment)
@@ -166,11 +149,8 @@ func main() {
 		}
 	}
 
-	// Swagger UI
-	// Đường dẫn để truy cập Swagger UI: http://localhost:PORT/swagger/index.html
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// 7. Start HTTP server
 	server := &http.Server{
 		Addr:    ":" + cfg.Port,
 		Handler: router,
@@ -184,7 +164,6 @@ func main() {
 		}
 	}()
 
-	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
