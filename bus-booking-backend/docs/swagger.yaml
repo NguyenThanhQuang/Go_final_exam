@@ -1,0 +1,261 @@
+basePath: /api/v1
+definitions:
+  services.CreateBookingInput:
+    properties:
+      seatNumbers:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      tripId:
+        type: string
+    required:
+    - seatNumbers
+    - tripId
+    type: object
+  services.LoginInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  services.RegisterInput:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - phone
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: your.email@example.com
+    name: API Support
+  description: |-
+    Đây là tài liệu API cho ứng dụng Backend đặt vé xe viết bằng Go.
+    Final Assignment - VTC Academy - Build Backend with Golang.
+  title: API Dịch vụ Đặt vé xe
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Xác thực người dùng bằng email và mật khẩu, trả về một token JWT.
+      parameters:
+      - description: Thông tin đăng nhập
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/services.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đăng nhập thành công, trả về token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Dữ liệu đầu vào không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Email hoặc mật khẩu không chính xác
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Đăng nhập vào hệ thống
+      tags:
+      - Authentication
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Tạo một tài khoản mới cho người dùng với email, số điện thoại,
+        tên và mật khẩu.
+      parameters:
+      - description: Thông tin đăng ký của người dùng
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/services.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Trả về thông tin người dùng đã tạo
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Dữ liệu đầu vào không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Email đã được sử dụng
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Đăng ký tài khoản người dùng mới
+      tags:
+      - Authentication
+  /bookings:
+    post:
+      consumes:
+      - application/json
+      description: Giữ chỗ cho người dùng đã đăng nhập. Yêu cầu token xác thực.
+      parameters:
+      - description: Thông tin để giữ chỗ
+        in: body
+        name: booking
+        required: true
+        schema:
+          $ref: '#/definitions/services.CreateBookingInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Giữ chỗ thành công, trả về thông tin booking
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Dữ liệu đầu vào không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Yêu cầu token xác thực
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy chuyến đi
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Ghế đã được người khác chọn (Conflict)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo một booking mới (Giữ chỗ)
+      tags:
+      - Bookings
+  /trips:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm các chuyến đi dựa trên điểm đi, điểm đến và ngày khởi
+        hành.
+      parameters:
+      - description: 'Tên điểm đi (Ví dụ: ''TP. Hồ Chí Minh'')'
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: 'Tên điểm đến (Ví dụ: ''Đà Lạt'')'
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: 'Ngày đi theo định dạng YYYY-MM-DD (Ví dụ: ''2024-05-25'')'
+        in: query
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách các chuyến đi phù hợp
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Các tham số query bắt buộc bị thiếu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi máy chủ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Tìm kiếm chuyến đi
+      tags:
+      - Trips
+  /trips/{tripId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy toàn bộ thông tin chi tiết của một chuyến đi, bao gồm cả sơ
+        đồ ghế.
+      parameters:
+      - description: ID của chuyến đi
+        in: path
+        name: tripId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin chi tiết của chuyến đi
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID chuyến đi không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy chuyến đi
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy thông tin chi tiết một chuyến đi
+      tags:
+      - Trips
+securityDefinitions:
+  BearerAuth:
+    description: 'Nhập token JWT với tiền tố ''Bearer ''. Ví dụ: "Bearer {token}"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
