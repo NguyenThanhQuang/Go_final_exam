@@ -1,6 +1,6 @@
 module github.com/Go_final_exam/bus-booking-backend
 
-go 1.24.1
+go 1.24.0
 
 require (
 	github.com/gin-gonic/gin v1.10.1
