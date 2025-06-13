@@ -104,3 +104,37 @@ func GetTripByID(tripID string) (*models.Trip, error) {
 
 	return &trip, nil
 }
+
+func GetAllTrips() ([]models.Trip, error) {
+	tripCollection := config.DB.Collection("trips")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{{Key: "departureTime", Value: 1}}) 
+
+	cursor, err := tripCollection.Find(ctx, bson.M{}, findOptions) 
+	if err != nil {
+		log.Printf("Lỗi khi lấy tất cả chuyến đi: %v", err)
+		return nil, errors.New("lỗi máy chủ khi truy vấn tất cả chuyến đi")
+	}
+	defer cursor.Close(ctx)
+
+	var trips []models.Trip
+	if err = cursor.All(ctx, &trips); err != nil {
+		log.Printf("Lỗi khi đọc dữ liệu tất cả chuyến đi từ cursor: %v", err)
+		return nil, errors.New("lỗi máy chủ khi đọc dữ liệu chuyến đi")
+	}
+
+	for i := range trips {
+		availableCount := 0
+		for _, seat := range trips[i].Seats {
+			if seat.Status == "available" {
+				availableCount++
+			}
+		}
+		trips[i].AvailableSeats = availableCount
+	}
+
+	return trips, nil
+}

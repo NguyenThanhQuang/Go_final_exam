@@ -140,7 +140,7 @@
                 "summary": "Tạo một booking mới (Giữ chỗ)",
                 "parameters": [
                     {
-                        "description": "Thông tin để giữ chỗ",
+                        "description": "Thông tin để giữ chỗ (tripId, seatNumbers)",
                         "name": "booking",
                         "in": "body",
                         "required": true,
@@ -151,14 +151,14 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Giữ chỗ thành công, trả về thông tin booking",
+                        "description": "Giữ chỗ thành công. Body: {thông báo: string, dữ_liệu: models.Booking}",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
                         }
                     },
                     "400": {
-                        "description": "Dữ liệu đầu vào không hợp lệ",
+                        "description": "Dữ liệu đầu vào không hợp lệ hoặc lỗi xử lý khác",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -167,7 +167,7 @@
                         }
                     },
                     "401": {
-                        "description": "Yêu cầu token xác thực",
+                        "description": "Yêu cầu token xác thực hoặc không tìm thấy thông tin người dùng",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -186,6 +186,131 @@
                     },
                     "409": {
                         "description": "Ghế đã được người khác chọn (Conflict)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi máy chủ nội bộ (ví dụ: lỗi định dạng ID người dùng)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/bookings/my": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tất cả các booking của người dùng đang đăng nhập. Yêu cầu token xác thực.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Lấy lịch sử đặt vé của người dùng hiện tại",
+                "responses": {
+                    "200": {
+                        "description": "Lấy lịch sử booking thành công. Body: {thông báo: string, dữ_liệu: []models.Booking}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Yêu cầu token xác thực hoặc không thể xác định người dùng",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi máy chủ nội bộ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/bookings/{bookingId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy thông tin chi tiết của một booking dựa trên ID. Yêu cầu token xác thực và booking phải thuộc về người dùng đang đăng nhập.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Lấy chi tiết một booking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "ObjectID",
+                        "description": "ID của Booking",
+                        "name": "bookingId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy chi tiết booking thành công. Body: {thông báo: string, dữ_liệu: models.Booking}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "ID booking không hợp lệ",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Yêu cầu token xác thực hoặc không thể xác định người dùng",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy booking hoặc không có quyền xem",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi máy chủ nội bộ",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

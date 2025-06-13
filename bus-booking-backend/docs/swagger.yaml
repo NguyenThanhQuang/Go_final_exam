@@ -129,7 +129,7 @@ paths:
       - application/json
       description: Giữ chỗ cho người dùng đã đăng nhập. Yêu cầu token xác thực.
       parameters:
-      - description: Thông tin để giữ chỗ
+      - description: Thông tin để giữ chỗ (tripId, seatNumbers)
         in: body
         name: booking
         required: true
@@ -139,18 +139,19 @@ paths:
       - application/json
       responses:
         "201":
-          description: Giữ chỗ thành công, trả về thông tin booking
+          description: 'Giữ chỗ thành công. Body: {thông báo: string, dữ_liệu: models.Booking}'
           schema:
             additionalProperties: true
             type: object
         "400":
-          description: Dữ liệu đầu vào không hợp lệ
+          description: Dữ liệu đầu vào không hợp lệ hoặc lỗi xử lý khác
           schema:
             additionalProperties:
               type: string
             type: object
         "401":
-          description: Yêu cầu token xác thực
+          description: Yêu cầu token xác thực hoặc không tìm thấy thông tin người
+            dùng
           schema:
             additionalProperties:
               type: string
@@ -167,9 +168,94 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "500":
+          description: 'Lỗi máy chủ nội bộ (ví dụ: lỗi định dạng ID người dùng)'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Tạo một booking mới (Giữ chỗ)
+      tags:
+      - Bookings
+  /bookings/{bookingId}:
+    get:
+      description: Lấy thông tin chi tiết của một booking dựa trên ID. Yêu cầu token
+        xác thực và booking phải thuộc về người dùng đang đăng nhập.
+      parameters:
+      - description: ID của Booking
+        format: ObjectID
+        in: path
+        name: bookingId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Lấy chi tiết booking thành công. Body: {thông báo: string,
+            dữ_liệu: models.Booking}'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID booking không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Yêu cầu token xác thực hoặc không thể xác định người dùng
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Không tìm thấy booking hoặc không có quyền xem
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi máy chủ nội bộ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết một booking
+      tags:
+      - Bookings
+  /bookings/my:
+    get:
+      description: Lấy danh sách tất cả các booking của người dùng đang đăng nhập.
+        Yêu cầu token xác thực.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Lấy lịch sử booking thành công. Body: {thông báo: string,
+            dữ_liệu: []models.Booking}'
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Yêu cầu token xác thực hoặc không thể xác định người dùng
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi máy chủ nội bộ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử đặt vé của người dùng hiện tại
       tags:
       - Bookings
   /trips:

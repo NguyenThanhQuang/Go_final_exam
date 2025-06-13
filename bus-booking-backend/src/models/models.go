@@ -71,7 +71,7 @@ type Booking struct {
 	CreatedAt   time.Time          `json:"createdAt" bson:"createdAt"`
 	UpdatedAt   time.Time          `json:"updatedAt" bson:"updatedAt"`
 
-	TripInfo *Trip `json:"tripInfo,omitempty" bson:"-"`
+	TripInfo *Trip `json:"tripInfo,omitempty" bson:"tripInfo,omitempty"`
 }
 
 type Passenger struct {

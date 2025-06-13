@@ -1,0 +1,10 @@
+.ticket-card-custom {
+  border: 1px solid #28a745 !important;
+  border-radius: 0.5rem !important;
+}
+
+.bi-arrow-long-right {
+  /* Đảm bảo bạn đã import Bootstrap Icons CSS trong public/index.html */
+  font-size: 1.2em;
+  vertical-align: middle;
+}

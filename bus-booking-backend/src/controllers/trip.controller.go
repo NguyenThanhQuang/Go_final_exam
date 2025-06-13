@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/Go_final_exam/bus-booking-backend/src/models"
 	"github.com/Go_final_exam/bus-booking-backend/src/services"
@@ -25,28 +26,39 @@ func SearchTripsController(c *gin.Context) {
 	to := c.Query("to")
 	date := c.Query("date")
 
-	if from == "" || to == "" || date == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"lỗi": "Các tham số 'from', 'to', và 'date' là bắt buộc."})
+	var trips []models.Trip
+	var err error
+
+	if from != "" && to != "" && date != "" {
+		trips, err = services.SearchTrips(from, to, date)
+	} else if from == "" && to == "" && date == "" {
+		trips, err = services.GetAllTrips() 
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"lỗi": "Cần cung cấp đủ các tham số 'from', 'to', 'date' cho việc tìm kiếm, hoặc không cung cấp tham số nào để lấy tất cả chuyến đi."})
 		return
 	}
 
-	trips, err := services.SearchTrips(from, to, date)
+
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"lỗi": "Đã có lỗi xảy ra ở máy chủ khi tìm kiếm chuyến đi."})
+		if strings.Contains(err.Error(), "Lỗi phân tích ngày") {
+             c.JSON(http.StatusBadRequest, gin.H{"lỗi": "Định dạng ngày không hợp lệ. Vui lòng sử dụng YYYY-MM-DD."})
+             return
+        }
+		c.JSON(http.StatusInternalServerError, gin.H{"lỗi": "Đã có lỗi xảy ra ở máy chủ khi xử lý yêu cầu chuyến đi."})
 		return
 	}
 
 	if len(trips) == 0 {
 		c.JSON(http.StatusOK, gin.H{
-			"thông báo": "Không tìm thấy chuyến đi nào phù hợp với yêu cầu của bạn.",
-			"dữ liệu":   []models.Trip{},
+			"thông báo": "Không tìm thấy chuyến đi nào phù hợp.",
+			"dữ_liệu":   []models.Trip{},
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"thông báo": "Tìm kiếm chuyến đi thành công!",
-		"dữ liệu":   trips,
+		"thông báo": "Yêu cầu chuyến đi thành công!", 
+		"dữ_liệu": trips,
 	})
 }
 
@@ -75,6 +87,7 @@ func GetTripDetailsController(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"thông báo": "Lấy thông tin chi tiết chuyến đi thành công!",
-		"dữ liệu":   trip,
+		"dữ_liệu": trip,
 	})
 }
+
